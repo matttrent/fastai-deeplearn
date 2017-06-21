@@ -10,10 +10,14 @@ from fastai import config, utils
 
 @click.command()
 @click.option('-r', '--run', default=-1, help='run to test')
+@click.option('-c', '--competition', help='kaggle competition name')
 @click.argument('dataset')
-def submit(run, dataset):
-    click.echo('submit')
-    click.echo(sys.argv)
+def submit(run, competition, dataset):
+    print('submit')
+    print(sys.argv)
+
+    if competition is None:
+        competition = dataset
 
     # data set paths
     dataset_obj = config.DataSet(dataset)
@@ -22,14 +26,17 @@ def submit(run, dataset):
         run = None
     run_path = dataset_obj.path_for_run(run)
 
-    subprocess.call([
+    cmd = [
         'kg',
         'submit',
         '-u', os.environ['KAGGLE_USERNAME'],
         '-p', os.environ['KAGGLE_PASSWORD'],
-        '-c', dataset,
+        '-c', competition,
         run_path + 'submission.csv'
-    ])
+    ]
+
+    print(' '.join(cmd))
+    subprocess.call(cmd)
 
     # preds = fautils.load_array(dataset.path_for_run() + 'test_preds.dat')
     # filenames = fautils.load_array(dataset.path_for_run() + 'filenames.dat')
