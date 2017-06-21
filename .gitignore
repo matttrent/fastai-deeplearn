@@ -1,6 +1,12 @@
+*.pyc
+*.egg-info
+.ipynb_checkpoints
+
 .domino
 .noLock
 domino.log
 results
 
+.env
+archive
 notebooks/data
