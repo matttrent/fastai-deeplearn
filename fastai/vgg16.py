@@ -145,7 +145,7 @@ class Vgg16():
                 class_mode=class_mode, shuffle=shuffle, batch_size=batch_size)
 
 
-    def ft(self, num):
+    def ft(self, num, train_last_n=None):
         """
             Replace the last layer of the model with a Dense (fully connected) layer of num neurons.
             Will also lock the weights of all layers except the new layer so that we only learn
@@ -156,13 +156,22 @@ class Vgg16():
             Returns:
                 None
         """
+        if train_last_n is None:
+            train_last_n = 1
+
         model = self.model
         model.pop()
-        for layer in model.layers: layer.trainable=False
+
+        # 1 less because we popped a layer
+        n_layers = len(model.layers) - (train_last_n - 1)
+        for layer in model.layers[:n_layers]:
+            layer.trainable=False
         model.add(Dense(num, activation='softmax'))
+
+        print('training layers', range(n_layers, len(model.layers)))
         self.compile()
 
-    def finetune(self, batches):
+    def finetune(self, batches, train_last_n=None):
         """
             Modifies the original VGG16 network architecture and updates self.classes for new training data.
             
@@ -170,7 +179,7 @@ class Vgg16():
                 batches : A keras.preprocessing.image.ImageDataGenerator object.
                           See definition for get_batches().
         """
-        self.ft(batches.nb_class)
+        self.ft(batches.nb_class, train_last_n)
         classes = list(iter(batches.class_indices)) # get a list of all the class labels
         
         # batches.class_indices is a dict with the class name as key and an index as value

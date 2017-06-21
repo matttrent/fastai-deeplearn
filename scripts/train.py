@@ -13,11 +13,11 @@ from fastai import config, utils, fautils
 @click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
 @click.argument('dataset')
 def train(epochs, batch_size, finetune_layers, learning_rate, dataset):
-    click.echo('training')
-    click.echo(
+    print('training')
+    print(
         '{} {} {} {}'.format(epochs, batch_size, finetune_layers, learning_rate)
     )
-    click.echo(sys.argv)
+    print(sys.argv)
 
     # data set paths
     dataset = config.DataSet(dataset)
@@ -39,7 +39,7 @@ def train(epochs, batch_size, finetune_layers, learning_rate, dataset):
         dataset.validate_path, batch_size=batch_size * 2)
 
     # fine tune the network and optimization
-    vgg.finetune(batches)
+    vgg.finetune(batches, finetune_layers)
     vgg.model.optimizer.lr = learning_rate
 
     for epoch in range(epochs):
@@ -53,7 +53,7 @@ def train(epochs, batch_size, finetune_layers, learning_rate, dataset):
     batches, preds = vgg.test(dataset.test_path, batch_size=batch_size * 2)
 
     df = utils.submission_df(batches, preds)
-    df.label = df.label.clip(min=0.05, max=0.95)
+    df.label = df.label.clip(0.05, 0.95)
     df.to_csv(dataset.run_path + 'submission.csv', index=True)
 
 
