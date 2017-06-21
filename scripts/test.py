@@ -51,10 +51,6 @@ def train(batch_size, run, dataset):
     df.label = df.label.clip(min=0.05, max=0.95)
     df.to_csv(run_path + 'submission.csv', index=True)
 
-    from fastai import fautils
-    fautils.save_array(run_path + 'test_preds.dat', preds)
-    fautils.save_array(run_path + 'filenames.dat', batches.filenames)
-
 
 if __name__ == '__main__':
     train()

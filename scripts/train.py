@@ -56,8 +56,6 @@ def train(epochs, batch_size, finetune_layers, learning_rate, dataset):
     df.label = df.label.clip(min=0.05, max=0.95)
     df.to_csv(dataset.run_path + 'submission.csv', index=True)
 
-    fautils.save_array(dataset.run_path + 'test_preds.dat', preds)
-    fautils.save_array(dataset.run_path + 'filenames.dat', batches.filenames)
 
 if __name__ == '__main__':
     train()
