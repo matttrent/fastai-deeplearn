@@ -8,16 +8,12 @@ DATA_PATH = os.path.join(os.path.expanduser('~/data'), PROJECT_NAME)
 
 class DataSet(object):
 
-    def __init__(self, dataset, sample=False):
+    def __init__(self, dataset):
         self._run_number = None
         self._dataset = dataset
-        self._sample = sample
 
     def _path_helper(self, *args):
         path = os.path.join(DATA_PATH, self._dataset)
-
-        if self._sample and 'results' not in args:
-            path = os.path.join(path, 'sample')
 
         path = os.path.join(path, *args)
         if path[-1] != '/':

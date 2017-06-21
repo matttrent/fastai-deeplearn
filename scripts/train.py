@@ -11,9 +11,8 @@ from fastai import config, utils, fautils
 @click.option('--ft', '--finetune-layers', default=1,
               help='finetune N last layers')
 @click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
-@click.option('-s', '--sample', is_flag=True, help='use sampled dataset')
 @click.argument('dataset')
-def train(epochs, batch_size, finetune_layers, learning_rate, sample, dataset):
+def train(epochs, batch_size, finetune_layers, learning_rate, dataset):
     click.echo('training')
     click.echo(
         '{} {} {} {}'.format(epochs, batch_size, finetune_layers, learning_rate)
@@ -21,15 +20,13 @@ def train(epochs, batch_size, finetune_layers, learning_rate, sample, dataset):
     click.echo(sys.argv)
 
     # data set paths
-    dataset = config.DataSet(dataset, sample)
+    dataset = config.DataSet(dataset)
 
-    click.echo(dataset.train_path)
+    # click.echo(dataset.train_path)
+    # click.echo(dataset.validate_path)
+    # click.echo(dataset.run_path)
     utils.mkdir_p(dataset.train_path)
-
-    click.echo(dataset.validate_path)
     utils.mkdir_p(dataset.validate_path)
-
-    click.echo(dataset.run_path)
     utils.mkdir_p(dataset.run_path)
 
     # create model
@@ -55,7 +52,7 @@ def train(epochs, batch_size, finetune_layers, learning_rate, sample, dataset):
 
     batches, preds = vgg.test(dataset.test_path, batch_size=batch_size * 2)
 
-    df = utils.prediction_df(batches, preds)
+    df = utils.submission_df(batches, preds)
     df.label = df.label.clip(min=0.05, max=0.95)
     df.to_csv(dataset.run_path + 'submission.csv', index=True)
 

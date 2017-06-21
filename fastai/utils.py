@@ -14,7 +14,7 @@ def mkdir_p(path):
             raise
 
 
-def prediction_df(batches, preds):
+def submission_df(batches, preds):
     # construct dataframe of the submission
     index = pd.Series(
         [int(f[8:f.find('.')]) for f in batches.filenames],

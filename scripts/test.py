@@ -10,15 +10,14 @@ from fastai import config, utils
 
 @click.command()
 @click.option('-b', '--batch-size', default=64, help='size of batches')
-@click.option('-s', '--sample', is_flag=True, help='use sampled dataset')
 @click.option('-r', '--run', default=-1, help='run to test')
 @click.argument('dataset')
-def train(batch_size, sample, run, dataset):
+def train(batch_size, run, dataset):
     click.echo('training')
     click.echo(sys.argv)
 
     # data set paths
-    dataset = config.DataSet(dataset, sample)
+    dataset = config.DataSet(dataset)
 
     click.echo(dataset.train_path)
     utils.mkdir_p(dataset.train_path)
@@ -48,7 +47,7 @@ def train(batch_size, sample, run, dataset):
     # get test patches, predictions and filenames
     batches, preds = vgg.test(dataset.test_path, batch_size=batch_size * 2)
 
-    df = utils.prediction_df(batches, preds)
+    df = utils.submission_df(batches, preds)
     df.label = df.label.clip(min=0.05, max=0.95)
     df.to_csv(run_path + 'submission.csv', index=True)
 
