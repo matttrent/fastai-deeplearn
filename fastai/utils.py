@@ -18,20 +18,6 @@ def mkdir_p(path):
             raise
 
 
-def submission_df(batches, preds):
-    # construct dataframe of the submission
-    index = pd.Series(
-        [int(f[8:f.find('.')]) for f in batches.filenames],
-        name='id'
-    )
-    df = pd.DataFrame({
-        'label': preds[:, 1]
-    },
-        index=index
-    )
-    return df
-
-
 def copyfiles(src, dst, n):
     classes = glob.glob(src + '/*')
     for cls in classes:

@@ -17,7 +17,6 @@ from keras.optimizers import SGD, RMSprop, Adam
 from keras.preprocessing import image
 
 
-vgg_mean = np.array([123.68, 116.779, 103.939], dtype=np.float32).reshape((3,1,1))
 def vgg_preprocess(x):
     """
         Subtracts the mean RGB value, and transposes RGB to BGR.
@@ -28,6 +27,8 @@ def vgg_preprocess(x):
         Returns:
             Image array (height x width x transposed_channels)
     """
+    vgg_mean = np.array([123.68, 116.779, 103.939], dtype=np.float32).reshape(
+        (3, 1, 1))
     x = x - vgg_mean
     return x[:, ::-1] # reverse axis rgb->bgr
 
@@ -134,8 +135,8 @@ class Vgg16():
         fname = 'vgg16.h5'
         model.load_weights(get_file(fname, self.FILE_PATH+fname, cache_subdir='models'))
 
-
-    def get_batches(self, path, gen=image.ImageDataGenerator(), shuffle=True, batch_size=8, class_mode='categorical'):
+    @staticmethod
+    def get_batches(path, gen=image.ImageDataGenerator(), shuffle=True, batch_size=8, class_mode='categorical'):
         """
             Takes the path to a directory, and generates batches of augmented/normalized data. Yields batches indefinitely, in an infinite loop.
 
@@ -145,7 +146,7 @@ class Vgg16():
                 class_mode=class_mode, shuffle=shuffle, batch_size=batch_size)
 
 
-    def ft(self, num, train_last_n=None):
+    def ft(self, num):
         """
             Replace the last layer of the model with a Dense (fully connected) layer of num neurons.
             Will also lock the weights of all layers except the new layer so that we only learn
@@ -156,30 +157,21 @@ class Vgg16():
             Returns:
                 None
         """
-        if train_last_n is None:
-            train_last_n = 1
-
         model = self.model
         model.pop()
-
-        # 1 less because we popped a layer
-        n_layers = len(model.layers) - (train_last_n - 1)
-        for layer in model.layers[:n_layers]:
-            layer.trainable=False
+        for layer in model.layers: layer.trainable=False
         model.add(Dense(num, activation='softmax'))
-
-        print('training layers', range(n_layers, len(model.layers)))
         self.compile()
 
-    def finetune(self, batches, train_last_n=None):
+    def finetune(self, batches):
         """
             Modifies the original VGG16 network architecture and updates self.classes for new training data.
-            
+
             Args:
                 batches : A keras.preprocessing.image.ImageDataGenerator object.
                           See definition for get_batches().
         """
-        self.ft(batches.nb_class, train_last_n)
+        self.ft(batches.nb_class)
         classes = list(iter(batches.class_indices)) # get a list of all the class labels
         
         # batches.class_indices is a dict with the class name as key and an index as value
@@ -209,13 +201,13 @@ class Vgg16():
                 validation_data=(val, val_labels), batch_size=batch_size)
 
 
-    def fit(self, batches, val_batches, nb_epoch=1):
+    def fit(self, batches, val_batches, nb_epoch=1, callbacks=None):
         """
             Fits the model on data yielded batch-by-batch by a Python generator.
             See Keras documentation: https://keras.io/models/model/
         """
         self.model.fit_generator(batches, samples_per_epoch=batches.nb_sample, nb_epoch=nb_epoch,
-                validation_data=val_batches, nb_val_samples=val_batches.nb_sample)
+                validation_data=val_batches, nb_val_samples=val_batches.nb_sample, callbacks=callbacks)
 
 
     def test(self, path, batch_size=8):
