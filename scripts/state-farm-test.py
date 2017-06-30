@@ -28,23 +28,12 @@ def submission_df(preds, test_batches, classes):
 @click.command()
 @click.option('-r', '--run', default=-1, help='run to test')
 @click.option('-b', '--batch-size', default=64, help='size of batches')
+@click.option('-c', '--competition', default=None, help='kaggle competition name')
 @click.argument('dataset')
-def train(run, batch_size, dataset):
-    # print('training')
-    # print(
-    #     '{} {} {}'.format(epochs, batch_size, learning_rate)
-    # )
-    # print(sys.argv)
+def test(run, batch_size, competition, dataset):
 
     # data set paths
     dset = config.DataSet(dataset)
-
-    # click.echo(dataset.train_path)
-    # click.echo(dataset.validate_path)
-    # click.echo(dataset.run_path)
-    # utils.mkdir_p(dataset.train_path)
-    # utils.mkdir_p(dataset.validate_path)
-    # utils.mkdir_p(dataset.run_path)
 
     model = keras.models.load_model(
         dset.path_for_run(run) + 'model.h5'
@@ -79,4 +68,4 @@ def train(run, batch_size, dataset):
 
 
 if __name__ == '__main__':
-    train()
+    test()

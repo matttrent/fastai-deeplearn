@@ -24,7 +24,7 @@ def test_df(batches, preds):
     },
         index=index
     )
-    return df
+    return df.sort_index()
 
 
 @click.command()

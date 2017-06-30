@@ -29,7 +29,7 @@ def submission_df(batches, preds):
 @click.option('-b', '--batch-size', default=64, help='size of batches')
 @click.option('-c', '--competition', default=None, help='kaggle competition name')
 @click.argument('dataset')
-def train(run, batch_size, competition, dataset):
+def test(run, batch_size, competition, dataset):
 
     # data set paths
     dset = config.DataSet(dataset)
@@ -60,4 +60,4 @@ def train(run, batch_size, competition, dataset):
 
 
 if __name__ == '__main__':
-    train()
+    test()
