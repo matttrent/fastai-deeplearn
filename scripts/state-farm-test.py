@@ -6,7 +6,7 @@ import click
 import keras.models
 import pandas as pd
 
-from fastai import config, utils, fautils
+from fastai import config, utils, fautils, kaggle
 
 
 def submission_df(preds, test_batches, classes):
@@ -35,36 +35,30 @@ def test(run, batch_size, competition, dataset):
     # data set paths
     dset = config.DataSet(dataset)
 
+    # load model
     model = keras.models.load_model(
         dset.path_for_run(run) + 'model.h5'
     )
 
-    # create model
+    # load test batches
     from fastai.vgg16 import Vgg16
+    test_batches = Vgg16.get_batches(
+        dset.test_path, shuffle=False, batch_size=batch_size * 2,
+        class_mode=None)
+
+    # predict
+    preds = model.predict_generator(test_batches, test_batches.nb_sample)
+
+    # format dataframe
     vgg = Vgg16()
-
-    # get the batches
-    batches = vgg.get_batches(dataset.train_path, batch_size=batch_size)
-    val_batches = vgg.get_batches(
-        dataset.validate_path, batch_size=batch_size * 2)
-
-    # fine tune the network and optimization
-    vgg.finetune(batches)
-    vgg.model.optimizer.lr = learning_rate
-
-    for epoch in range(epochs):
-        print("Running epoch: {}".format(epoch))
-        vgg.fit(batches, val_batches, nb_epoch=1)
-        latest_weights_filename = 'ft%d.h5' % epoch
-        vgg.model.save_weights(dataset.run_path + latest_weights_filename)
-
-    print("Completed {} fit operations".format(epochs))
-
-    test_batches, preds = vgg.test(dataset.test_path, batch_size=batch_size * 2)
-
     df = submission_df(preds, test_batches, vgg.classes)
-    # df.label = df.label.clip(0.05, 0.95)
-    df.to_csv(dataset.run_path + 'submission.csv', index=True)
+    df.label = df.label.clip(0.05, 0.95)
+    df.to_csv(dset.path_for_run(run) + 'submission.csv', index=True)
+
+    # submit
+    if competition is None:
+        return
+    kaggle.submit(run, competition, dataset)
 
 
 if __name__ == '__main__':
