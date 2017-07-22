@@ -163,6 +163,7 @@ class Vgg16():
         model.add(Dense(num, activation='softmax'))
         self.compile()
 
+
     def finetune(self, batches):
         """
             Modifies the original VGG16 network architecture and updates self.classes for new training data.
@@ -181,6 +182,19 @@ class Vgg16():
         for c in batches.class_indices:
             classes[batches.class_indices[c]] = c
         self.classes = classes
+
+
+    def trainable_layers(self, num_layers):
+
+        model = self.model
+        for layer in model.layers:
+            layer.trainable = False
+
+        if num_layers is 0:
+            return
+
+        for layer in model.layers[-num_layers:]:
+            layer.trainable = True
 
 
     def compile(self, lr=0.001):

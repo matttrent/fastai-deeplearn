@@ -31,8 +31,9 @@ def test_df(batches, preds):
 @click.option('-e', '--epochs', default=3, help='number of epochs')
 @click.option('-b', '--batch-size', default=64, help='size of batches')
 @click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
+@click.option('-t', '--num-trainable', default=1, help='train last n layers')
 @click.argument('dataset')
-def train(epochs, batch_size, learning_rate, dataset):
+def train(epochs, batch_size, learning_rate, num_trainable, dataset):
 
     # data set paths
     dset = config.DataSet(dataset)
@@ -44,7 +45,8 @@ def train(epochs, batch_size, learning_rate, dataset):
             'epochs': epochs,
             'batch_size': batch_size,
             'learning_rate': learning_rate,
-            'dataset': dataset
+            'dataset': dataset,
+            'trainable': num_trainable
         }))
 
     # create model
@@ -61,7 +63,11 @@ def train(epochs, batch_size, learning_rate, dataset):
 
     # fit the data
     csv_logger = CSVLogger(dset.run_path + 'train_log.csv')
-    vgg.fit(batches, val_batches, nb_epoch=epochs, callbacks=[csv_logger])
+    vgg.fit(batches, val_batches, nb_epoch=1, callbacks=[csv_logger])
+
+    if epochs > 1:
+        vgg.trainable_layers(num_trainable)
+        vgg.fit(batches, val_batches, nb_epoch=epochs-1, callbacks=[csv_logger])
 
     model_fn = 'model.h5'
     vgg.model.save(dset.run_path + model_fn)

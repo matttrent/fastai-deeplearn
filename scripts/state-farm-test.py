@@ -45,13 +45,16 @@ def test(run, batch_size, competition, dataset):
     test_batches = Vgg16.get_batches(
         dset.test_path, shuffle=False, batch_size=batch_size * 2,
         class_mode=None)
+    train_batches = Vgg16.get_batches(
+        dset.train_path, shuffle=False, batch_size=batch_size * 2,
+        class_mode=None)
+    classes = sorted(train_batches.class_indices)
 
     # predict
     preds = model.predict_generator(test_batches, test_batches.nb_sample)
 
     # format dataframe
-    vgg = Vgg16()
-    df = submission_df(preds, test_batches, vgg.classes)
+    df = submission_df(preds, test_batches, classes)
     df.label = df.label.clip(0.05, 0.95)
     df.to_csv(dset.path_for_run(run) + 'submission.csv', index=True)
 
