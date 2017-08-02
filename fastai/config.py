@@ -1,9 +1,36 @@
 import os
 import glob
+import shutil
+import tarfile
 
-PROJECT_NAME = 'fastai-deep-learning'
+from fastai import utils
 
-DATA_PATH = os.path.join(os.path.expanduser('~/data'), PROJECT_NAME)
+DATASET_TAR_PATH = os.environ.get(
+    'DOMINO_MATTTRENT_KAGGLE_DOGSCATS_WORKING_DIR')
+DATASET_PATH = os.path.expandvars('$DOMINO_WORKING_DIR/tmp')
+
+
+def setup_theano():
+    destfile = os.path.expandvars('$HOME/.theanorc')
+    srcfile  = os.path.expandvars('$DOMINO_WORKING_DIR/.theanorc')
+    open(destfile, 'a').close()
+    shutil.copyfile(srcfile, destfile)
+
+    print('Finished setting up Theano')
+
+
+def setup_keras():
+    srcpath = os.path.expandvars('$DOMINO_WORKING_DIR/keras')
+    dstpath = os.path.expandvars('$HOME/.keras')
+
+    os.symlink(srcpath, dstpath)
+
+    print('Finished setting up Keras')
+
+
+def setup_dl():
+    # setup_theano()
+    setup_keras()
 
 
 class DataSet(object):
@@ -12,8 +39,19 @@ class DataSet(object):
         self._run_number = None
         self._dataset = dataset
 
+    def domino_helper(self):
+        print('dataset path: {}'.format(DATASET_PATH))
+        print('dataset tarpath: {}'.format(DATASET_TAR_PATH))
+        utils.mkdir_p(DATASET_PATH)
+        dataset_tar = os.path.join(
+            DATASET_TAR_PATH, '{}.tar.gz'.format(self._dataset))
+        print('dataset tarfile: {}'.format(dataset_tar))
+        tar = tarfile.open(dataset_tar)
+        tar.extractall(DATASET_PATH)
+        tar.close()
+
     def _path_helper(self, *args):
-        path = os.path.join(DATA_PATH, self._dataset)
+        path = os.path.join(DATASET_PATH, self._dataset)
 
         path = os.path.join(path, *args)
         if path[-1] != '/':

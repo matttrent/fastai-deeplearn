@@ -1,0 +1,9 @@
+[global]
+floatX = float32
+device = cuda
+
+[nvcc]
+fastmath = True
+
+[cuda]
+root = /usr/local/cuda

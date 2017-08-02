@@ -18,6 +18,7 @@ results/run-*/
 
 # Python
 *.pyc
+__pycache__
 
 # R
 .Rhistory
@@ -37,6 +38,9 @@ octave-core
 
 # General
 ~*
+.env
 
 # Data files
 notebooks/data
+tmp
+# keras/models  # uncomment this if caching models takes up too much space/time

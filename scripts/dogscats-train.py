@@ -1,16 +1,27 @@
 #!/usr/bin/env python
 
+# IMPORTANT: needs to be called before keras is imported
+from fastai.config import setup_dl
+setup_dl()
+
 import os
-import sys
 import click
 import yaml
 
-from keras import backend as K
-from keras.callbacks import CSVLogger
-
 import pandas as pd
 
-from fastai import config, utils, fautils
+from fastai import config, utils
+
+from keras.callbacks import CSVLogger
+
+
+def results_path(dataset):
+    run_num = int(os.environ.get('DOMINO_RUN_NUMBER'))
+    run_str = '{}-{:03}/'.format(dataset, run_num)
+
+    path = os.path.expandvars(os.environ.get('RESULTS_ROOT_PATH'))
+    path = os.path.join(path, run_str)
+    return path
 
 
 def test_df(batches, preds):
@@ -35,16 +46,28 @@ def test_df(batches, preds):
 def train(epochs, batch_size, learning_rate, dataset):
 
     dset = config.DataSet(dataset)
+    dset.domino_helper()
 
-    utils.mkdir_p(dset.run_path)
+    run_path = results_path(dataset)
+    utils.mkdir_p(run_path)
 
-    with open(dset.run_path + 'params.yaml', 'w') as f:
+    with open(run_path + 'params.yaml', 'w') as f:
         f.write(yaml.dump({
             'epochs': epochs,
             'batch_size': batch_size,
             'learning_rate': learning_rate,
             'dataset': dataset
         }))
+
+    # config keras
+    # config.setup_dl()
+    from keras import backend as K
+    print(K.backend(), K.image_dim_ordering(), K.epsilon(), K.floatx())
+
+    # K.set_image_dim_ordering('th')
+    # K.set_epsilon(1e-7)
+    # K.set_floatx('float32')
+    # print(K.backend(),K.image_dim_ordering(), K.epsilon(), K.floatx())
 
     # create model
     from fastai.vgg16 import Vgg16
@@ -59,17 +82,18 @@ def train(epochs, batch_size, learning_rate, dataset):
     K.set_value(vgg.model.optimizer.lr, learning_rate)
 
     # fit the data
-    csv_logger = CSVLogger(dset.run_path + 'train_log.csv')
+    csv_logger = CSVLogger(run_path + 'train_log.csv')
     vgg.fit(batches, val_batches, nb_epoch=epochs, callbacks=[csv_logger])
 
-    # save the model
-    model_fn = 'model.h5'
-    vgg.model.save(dset.run_path + model_fn)
+    # save the model, unless it's a sample
+    if 'sample' not in dataset:
+        model_fn = 'model.h5'
+        vgg.model.save(run_path + model_fn)
 
     # predict validation set and save
     batches, preds = vgg.test(dset.validate_path, batch_size=batch_size * 2)
     df = test_df(batches, preds)
-    df.to_csv(dset.run_path + 'validate.csv', index=True)
+    df.to_csv(run_path + 'validate.csv', index=True)
 
 
 if __name__ == '__main__':
