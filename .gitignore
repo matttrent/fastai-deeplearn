@@ -11,3 +11,5 @@ results
 .env
 archive
 notebooks/data
+.idea
+deeplearning1

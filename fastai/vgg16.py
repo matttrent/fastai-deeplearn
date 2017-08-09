@@ -39,7 +39,9 @@ class Vgg16():
     """
 
 
-    def __init__(self):
+    def __init__(self, dropout=0.5):
+        self._dropout = dropout
+
         self.FILE_PATH = 'http://files.fast.ai/models/'
         self.create()
         self.get_classes()
@@ -108,7 +110,7 @@ class Vgg16():
         """
         model = self.model
         model.add(Dense(4096, activation='relu'))
-        model.add(Dropout(0.5))
+        model.add(Dropout(self._dropout))
 
 
     def create(self):
@@ -195,6 +197,8 @@ class Vgg16():
 
         for layer in model.layers[-num_layers:]:
             layer.trainable = True
+
+        self.compile()
 
 
     def compile(self, lr=0.001):

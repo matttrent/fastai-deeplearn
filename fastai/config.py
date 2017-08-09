@@ -1,9 +1,8 @@
 import os
 import glob
 
-PROJECT_NAME = 'fastai-deep-learning'
 
-DATA_PATH = os.path.join(os.path.expanduser('~/data'), PROJECT_NAME)
+DATA_PATH = os.path.expanduser('~/data')
 
 
 class DataSet(object):

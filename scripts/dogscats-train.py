@@ -5,9 +5,6 @@ import sys
 import click
 import yaml
 
-from keras import backend as K
-from keras.callbacks import CSVLogger
-
 import pandas as pd
 
 from fastai import config, utils, fautils
@@ -31,8 +28,10 @@ def test_df(batches, preds):
 @click.option('-e', '--epochs', default=3, help='number of epochs')
 @click.option('-b', '--batch-size', default=64, help='size of batches')
 @click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
+@click.option('-t', '--num-trainable', default=1, help='train last n layers')
+@click.option('-d', '--dropout', default=0.5, help='dropout')
 @click.argument('dataset')
-def train(epochs, batch_size, learning_rate, dataset):
+def train(epochs, batch_size, learning_rate, num_trainable, dropout, dataset):
 
     dset = config.DataSet(dataset)
 
@@ -43,12 +42,16 @@ def train(epochs, batch_size, learning_rate, dataset):
             'epochs': epochs,
             'batch_size': batch_size,
             'learning_rate': learning_rate,
-            'dataset': dataset
+            'trainable': num_trainable,
+            'dropout': dropout,
+            'dataset': dataset,
         }))
 
     # create model
+    from keras import backend as K
+    from keras.callbacks import CSVLogger
     from fastai.vgg16 import Vgg16
-    vgg = Vgg16()
+    vgg = Vgg16(dropout=dropout)
 
     # get the batches
     batches = vgg.get_batches(dset.train_path, batch_size=batch_size)
@@ -59,8 +62,12 @@ def train(epochs, batch_size, learning_rate, dataset):
     K.set_value(vgg.model.optimizer.lr, learning_rate)
 
     # fit the data
-    csv_logger = CSVLogger(dset.run_path + 'train_log.csv')
-    vgg.fit(batches, val_batches, nb_epoch=epochs, callbacks=[csv_logger])
+    csv_logger = CSVLogger(dset.run_path + 'train_log.csv', append=True)
+    vgg.fit(batches, val_batches, nb_epoch=1, callbacks=[csv_logger])
+
+    if epochs > 1:
+        vgg.trainable_layers(num_trainable)
+        vgg.fit(batches, val_batches, nb_epoch=epochs-1, callbacks=[csv_logger])
 
     # save the model
     model_fn = 'model.h5'

@@ -2,12 +2,11 @@
 
 import sys
 import click
+import yaml
 
-import keras.models
-from keras.preprocessing import image
 import pandas as pd
 
-from fastai import config, utils, fautils, kaggle
+from fastai import config, utils, kaggle
 
 
 def submission_df(batches, preds):
@@ -34,10 +33,17 @@ def test(run, batch_size, competition, dataset):
     # data set paths
     dset = config.DataSet(dataset)
 
+    with open(dset.path_for_run(run) + 'params.yaml') as f:
+        params = yaml.load(f)
+
     # load model
+    import keras.models
     model = keras.models.load_model(
         dset.path_for_run(run) + 'model.h5'
     )
+    model.compile(
+        optimizer=keras.optimizers.Adam(lr=params['learning_rate']),
+        loss='categorical_crossentropy', metrics=['accuracy'])
 
     # load test batches
     from fastai.vgg16 import Vgg16

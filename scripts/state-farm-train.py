@@ -5,12 +5,9 @@ import sys
 import click
 import yaml
 
-from keras import backend as K
-from keras.callbacks import CSVLogger
-
 import pandas as pd
 
-from fastai import config, utils, fautils
+from fastai import config, utils
 
 
 def test_df(batches, preds):
@@ -32,8 +29,9 @@ def test_df(batches, preds):
 @click.option('-b', '--batch-size', default=64, help='size of batches')
 @click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
 @click.option('-t', '--num-trainable', default=1, help='train last n layers')
+@click.option('-d', '--dropout', default=0.5, help='dropout')
 @click.argument('dataset')
-def train(epochs, batch_size, learning_rate, num_trainable, dataset):
+def train(epochs, batch_size, learning_rate, num_trainable, dropout, dataset):
 
     # data set paths
     dset = config.DataSet(dataset)
@@ -45,13 +43,16 @@ def train(epochs, batch_size, learning_rate, num_trainable, dataset):
             'epochs': epochs,
             'batch_size': batch_size,
             'learning_rate': learning_rate,
+            'trainable': num_trainable,
+            'dropout': dropout,
             'dataset': dataset,
-            'trainable': num_trainable
         }))
 
     # create model
+    from keras import backend as K
+    from keras.callbacks import CSVLogger
     from fastai.vgg16 import Vgg16
-    vgg = Vgg16()
+    vgg = Vgg16(dropout=dropout)
 
     # get the batches
     batches = vgg.get_batches(dset.train_path, batch_size=batch_size)
@@ -62,7 +63,7 @@ def train(epochs, batch_size, learning_rate, num_trainable, dataset):
     K.set_value(vgg.model.optimizer.lr, learning_rate)
 
     # fit the data
-    csv_logger = CSVLogger(dset.run_path + 'train_log.csv')
+    csv_logger = CSVLogger(dset.run_path + 'train_log.csv', append=True)
     vgg.fit(batches, val_batches, nb_epoch=1, callbacks=[csv_logger])
 
     if epochs > 1:
