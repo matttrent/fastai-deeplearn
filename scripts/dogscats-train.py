@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import division, print_function
+
 import os
 import sys
 import click
@@ -27,7 +29,7 @@ def test_df(batches, preds):
 @click.command()
 @click.option('-e', '--epochs', default=3, help='number of epochs')
 @click.option('-b', '--batch-size', default=64, help='size of batches')
-@click.option('--lr', '--learning-rate', default=0.01, help='learning rate')
+@click.option('-l, ''--lr', '--learning-rate', default=0.01, help='learning rate')
 @click.option('-t', '--num-trainable', default=1, help='train last n layers')
 @click.option('-d', '--dropout', default=0.5, help='dropout')
 @click.argument('dataset')
@@ -59,7 +61,7 @@ def train(epochs, batch_size, learning_rate, num_trainable, dropout, dataset):
 
     # fine tune the network and optimization
     vgg.finetune(batches)
-    K.set_value(vgg.model.optimizer.lr, learning_rate)
+    vgg.compile(learning_rate)
 
     # fit the data
     csv_logger = CSVLogger(dset.run_path + 'train_log.csv', append=True)
