@@ -51,7 +51,7 @@ def list_rate_schedule(lrates, output=True):
     return lr_sched
 
 
-def fit_generator(model, trn_batches, rates, val_batches=None, 
+def fit_generator(model, trn_batches, rates=None, val_batches=None, 
     callbacks=None, **kwargs):
 
     if val_batches is not None:
@@ -63,9 +63,11 @@ def fit_generator(model, trn_batches, rates, val_batches=None,
     kwargs['callbacks'] = []
     if callbacks is not None:
         kwargs['callbacks'] += callbacks
-    lrsched = keras.callbacks.LearningRateScheduler(
-        list_rate_schedule(rates))
-    kwargs['callbacks'].append(lrsched)
+
+    if rates is not None:
+        lrsched = keras.callbacks.LearningRateScheduler(
+            list_rate_schedule(rates))
+        kwargs['callbacks'].append(lrsched)
 
     return model.fit_generator(
         trn_batches,
