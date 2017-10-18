@@ -56,9 +56,9 @@ def fit_generator(model, trn_batches, rates=None, val_batches=None,
 
     if val_batches is not None:
         kwargs['validation_data'] = val_batches
-        kwargs['nb_val_samples'] = val_batches.nb_sample
+        kwargs['validation_steps'] = val_batches.samples // val_batches.batch_size
 
-    kwargs['nb_epoch'] = sum([p[1] for p in rates])
+    kwargs['epochs'] = sum([p[1] for p in rates])
 
     kwargs['callbacks'] = []
     if callbacks is not None:
@@ -71,7 +71,7 @@ def fit_generator(model, trn_batches, rates=None, val_batches=None,
 
     return model.fit_generator(
         trn_batches,
-        trn_batches.nb_sample,
+        trn_batches.samples // trn_batches.batch_size,
         **kwargs
     )
 
