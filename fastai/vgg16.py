@@ -11,12 +11,17 @@ from keras.layers.normalization import BatchNormalization
 from keras.utils.data_utils import get_file
 from keras.models import Sequential
 from keras.layers.core import Flatten, Dense, Dropout, Lambda
-from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.pooling import GlobalAveragePooling2D
 from keras.optimizers import SGD, RMSprop, Adam
 from keras.preprocessing import image
 
+# In case we are going to use the TensorFlow backend we need to explicitly set the Theano image ordering
+from keras import backend as K
+K.set_image_dim_ordering('th')
 
+
+vgg_mean = np.array([123.68, 116.779, 103.939], dtype=np.float32).reshape((3,1,1))
 def vgg_preprocess(x):
     """
         Subtracts the mean RGB value, and transposes RGB to BGR.
@@ -27,8 +32,6 @@ def vgg_preprocess(x):
         Returns:
             Image array (height x width x transposed_channels)
     """
-    vgg_mean = np.array([123.68, 116.779, 103.939], dtype=np.float32).reshape(
-        (3, 1, 1))
     x = x - vgg_mean
     return x[:, ::-1] # reverse axis rgb->bgr
 
@@ -39,9 +42,7 @@ class Vgg16():
     """
 
 
-    def __init__(self, dropout=0.5):
-        self._dropout = dropout
-
+    def __init__(self):
         self.FILE_PATH = 'http://files.fast.ai/models/'
         self.create()
         self.get_classes()
@@ -96,7 +97,7 @@ class Vgg16():
         model = self.model
         for i in range(layers):
             model.add(ZeroPadding2D((1, 1)))
-            model.add(Conv2D(filters, (3, 3), activation='relu'))
+            model.add(Convolution2D(filters, 3, 3, activation='relu'))
         model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 
@@ -110,7 +111,7 @@ class Vgg16():
         """
         model = self.model
         model.add(Dense(4096, activation='relu'))
-        model.add(Dropout(self._dropout))
+        model.add(Dropout(0.5))
 
 
     def create(self):
@@ -137,8 +138,8 @@ class Vgg16():
         fname = 'vgg16.h5'
         model.load_weights(get_file(fname, self.FILE_PATH+fname, cache_subdir='models'))
 
-    @staticmethod
-    def get_batches(path, gen=image.ImageDataGenerator(), shuffle=True, batch_size=8, class_mode='categorical'):
+
+    def get_batches(self, path, gen=image.ImageDataGenerator(), shuffle=True, batch_size=8, class_mode='categorical'):
         """
             Takes the path to a directory, and generates batches of augmented/normalized data. Yields batches indefinitely, in an infinite loop.
 
@@ -165,11 +166,10 @@ class Vgg16():
         model.add(Dense(num, activation='softmax'))
         self.compile()
 
-
     def finetune(self, batches):
         """
             Modifies the original VGG16 network architecture and updates self.classes for new training data.
-
+            
             Args:
                 batches : A keras.preprocessing.image.ImageDataGenerator object.
                           See definition for get_batches().
@@ -184,21 +184,6 @@ class Vgg16():
         for c in batches.class_indices:
             classes[batches.class_indices[c]] = c
         self.classes = classes
-
-
-    def trainable_layers(self, num_layers):
-
-        model = self.model
-        for layer in model.layers:
-            layer.trainable = False
-
-        if num_layers is 0:
-            return
-
-        for layer in model.layers[-num_layers:]:
-            layer.trainable = True
-
-        self.compile()
 
 
     def compile(self, lr=0.001):
@@ -219,13 +204,13 @@ class Vgg16():
                 validation_data=(val, val_labels), batch_size=batch_size)
 
 
-    def fit(self, batches, val_batches, nb_epoch=1, callbacks=None):
+    def fit(self, batches, val_batches, nb_epoch=1):
         """
             Fits the model on data yielded batch-by-batch by a Python generator.
             See Keras documentation: https://keras.io/models/model/
         """
         self.model.fit_generator(batches, samples_per_epoch=batches.nb_sample, nb_epoch=nb_epoch,
-                validation_data=val_batches, nb_val_samples=val_batches.nb_sample, callbacks=callbacks)
+                validation_data=val_batches, nb_val_samples=val_batches.nb_sample)
 
 
     def test(self, path, batch_size=8):
