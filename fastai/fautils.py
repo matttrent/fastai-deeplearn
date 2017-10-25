@@ -25,10 +25,10 @@ from sklearn.manifold import TSNE
 
 from IPython.lib.display import FileLink
 
-# import theano
-# from theano import shared, tensor as T
-# from theano.tensor.nnet import conv2d, nnet
-# from theano.tensor.signal import pool
+import theano
+from theano import shared, tensor as T
+from theano.tensor.nnet import conv2d, nnet
+from theano.tensor.signal import pool
 
 import keras
 from keras import backend as K
@@ -82,8 +82,9 @@ def plots(ims, figsize=(12,6), rows=1, interp=False, titles=None):
         if (ims.shape[-1] != 3):
             ims = ims.transpose((0,2,3,1))
     f = plt.figure(figsize=figsize)
+    cols = len(ims)//rows if len(ims) % 2 == 0 else len(ims)//rows + 1
     for i in range(len(ims)):
-        sp = f.add_subplot(rows, len(ims)//rows, i+1)
+        sp = f.add_subplot(rows, cols, i+1)
         sp.axis('Off')
         if titles is not None:
             sp.set_title(titles[i], fontsize=16)
