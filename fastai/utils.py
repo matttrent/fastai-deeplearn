@@ -75,3 +75,17 @@ def fit_generator(model, trn_batches, rates=None, val_batches=None,
         **kwargs
     )
 
+def fit(model, trn_feat, trn_label, rates, batche_size=None, 
+    validation_data=None, callbacks=None, **kwargs):
+
+    if validation_data is not None:
+        kwargs['validation_data'] = validation_data
+
+    model.fit(
+        t_features,
+        trn_labels,
+        batch_size=t_batches.batch_size,
+        epochs=sum([x[1] for x in rates]),
+        validation_data=(v_features, val_labels),
+        callbacks=callbacks,
+    )
